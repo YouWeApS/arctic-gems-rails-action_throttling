@@ -11,7 +11,7 @@ module ActionThrottling
     def cost(price)
       # If last time the bucket was called is older than the regeneration limit
       # regenerate the bucket.
-      regenerate if last_called < regeneration_time
+      regenerate if expired?
 
       # Deduct the price from the bucket. If it's below zero we raiss a
       # HttpError::ToManyRequests exception/
@@ -20,17 +20,29 @@ module ActionThrottling
       end
 
       # Store when the cost was last called so we can calculate regeneration
-      redis.set last_call_key, Time.now.httpdate
+      update_call_time
     end
 
     private
+
+      def update_call_time
+        redis.set last_call_key, Time.now.httpdate
+      end
+
+      def expired?
+        last_called < regeneration_time
+      end
 
       def last_call_key
         "#{bucket_key}-last-call"
       end
 
       def regenerate
-        redis.set bucket_key, ActionThrottling.configuration.regenerate_amount
+        redis.set bucket_key, regenerate_amount
+      end
+
+      def regenerate_amount
+        instance_eval &ActionThrottling.configuration.regenerate_amount
       end
 
       def last_called
@@ -47,7 +59,7 @@ module ActionThrottling
       end
 
       def regeneration_time
-        ActionThrottling.configuration.regenerate_interval.ago
+        instance_eval(&ActionThrottling.configuration.regenerate_interval).ago
       end
 
       def redis

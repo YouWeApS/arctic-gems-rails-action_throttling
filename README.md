@@ -11,13 +11,13 @@ Configure your bucket. There are no default values for this, since we can't know
 ```ruby
 ActionThrottling.configure do |config|
   # The bucket_key is evaluated inside your application context
-  config.bucket_key = Proc.new { current_user.bucket }
+  config.bucket_key = Proc.new { current_user.id }
 
   # Set the interval in which the bucket is regenerated
-  config.regenerate_interval = 10.minutes
+  config.regenerate_interval = Proc.new { current_user.regenerate_interval }
 
-  # Sets the number of tokens to be pub back into the bucket
-  config.regenerate_amount = 100
+  # Sets the number of tokens to be put back into the bucket
+  config.regenerate_amount = Proc.new { current_user.regenerate_amount }
 
   # (optional) If you're not running on a completely vanilla redis connection,
   # you can supply your own redis instance here.
@@ -33,7 +33,7 @@ def show
   # Based on the configuration above, this will allow the user to call this
   # endpoint 100 times every minute.
   #
-  # This will call the `deduct(1)` method on the configured `config.bucket` (see
+  # This will call the `deduct(1)` method on the configured `config.bucket_key` (see
   # above)
   cost 1
   # ...
@@ -44,7 +44,7 @@ If you have something like a create method, or some complex method that's costly
 
 ```ruby
 def complex_method
-  # This will call `deduct(25)` on the `config.bucket` (see above)
+  # This will call `deduct(25)` on the `config.bucket_key` (see above)
   cost 25
   # ...
 end

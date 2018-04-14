@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rails-action_throttling (0.1.0)
+    rails-action_throttling (0.1.1)
       activesupport (~> 5.2)
       http-errors (~> 0.1)
       redis (~> 4.0)
