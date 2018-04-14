@@ -43,11 +43,7 @@ module ActionThrottling
       end
 
       def bucket_key
-        if ActionThrottling.configuration.bucket_key.is_a? Proc
-          instance_eval &ActionThrottling.configuration.bucket_key
-        else
-          ActionThrottling.configuration.bucket_key
-        end
+        instance_eval &ActionThrottling.configuration.bucket_key
       end
 
       def regeneration_time

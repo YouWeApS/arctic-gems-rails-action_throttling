@@ -10,20 +10,18 @@ Configure your bucket. There are no default values for this, since we can't know
 
 ```ruby
 ActionThrottling.configure do |config|
-  # The bucket is evaluated inside your application context, so the object must
-  # respond to call. The resulting object must respond to `deduct` to deduct the
-  # cost.
-  config.bucket = Proc.new { current_user.bucket }
+  # The bucket_key is evaluated inside your application context
+  config.bucket_key = Proc.new { current_user.bucket }
 
-  # Configure how fast the bucket regenerates.
-  # The `interval` determines the interval at which the `bucket` regains
-  # `amount` credit.
-  config.regenerate = Proc.new do
-    {
-      interval: current_user.bucket.regeneration_interval, # 1.minute
-      amount: current_user.bucket.regeration_amount, # 10
-    }
-  end
+  # Set the interval in which the bucket is regenerated
+  config.regenerate_interval = 10.minutes
+
+  # Sets the number of tokens to be pub back into the bucket
+  config.regenerate_amount = 100
+
+  # (optional) If you're not running on a completely vanilla redis connection,
+  # you can supply your own redis instance here.
+  config.redis = Redis.new 'http://redis-server.com'
 end
 ```
 

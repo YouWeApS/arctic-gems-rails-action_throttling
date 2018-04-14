@@ -1,6 +1,10 @@
 module ActionThrottling
   class Configuration
-    attr_accessor :bucket_key, :regenerate_amount, :regenerate_interval
+    attr_accessor :bucket_key, :regenerate_amount, :regenerate_interval, :redis
+
+    def initialize
+      self.redis = Redis.new
+    end
   end
 
   class << self
