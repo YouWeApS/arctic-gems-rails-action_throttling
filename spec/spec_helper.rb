@@ -1,5 +1,5 @@
 require "bundler/setup"
-require "rails/action_throttling"
+require "action_throttling"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

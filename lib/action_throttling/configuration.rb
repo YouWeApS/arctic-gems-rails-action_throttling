@@ -1,6 +1,6 @@
 module ActionThrottling
   class Configuration
-    attr_accessor :bucket, :regenerate
+    attr_accessor :bucket_key, :regenerate_amount, :regenerate_interval
   end
 
   class << self
