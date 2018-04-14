@@ -1,11 +1,11 @@
 
 lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require "rails/action_throttling/version"
+require "action_throttling/version"
 
 Gem::Specification.new do |spec|
   spec.name          = "rails-action_throttling"
-  spec.version       = Rails::ActionThrottling::VERSION
+  spec.version       = ActionThrottling::VERSION
   spec.authors       = ["Emil Kampp"]
   spec.email         = ["emil@kampp.me"]
 
@@ -24,4 +24,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "bundler", "~> 1.16"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec", "~> 3.0"
+  spec.add_runtime_dependency "http-errors", "~> 0.1"
 end

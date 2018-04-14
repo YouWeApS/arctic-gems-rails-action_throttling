@@ -1,39 +1,53 @@
-# Rails::ActionThrottling
-
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/rails/action_throttling`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
-
-## Installation
-
-Add this line to your application's Gemfile:
-
-```ruby
-gem 'rails-action_throttling'
-```
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install rails-action_throttling
+# Action throttling
 
 ## Usage
 
-TODO: Write usage instructions here
+```
+gem 'rails-action_throtling'
+```
 
-## Development
+Configure your bucket. There are no default values for this, since we can't know your application specific implementation, so this step is mandatory.
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+```ruby
+ActionThrottling.configure do |config|
+  # The bucket is evaluated inside your application context, so the object must
+  # respond to call. The resulting object must respond to `deduct` to deduct the
+  # cost.
+  config.bucket = Proc.new { current_user.bucket }
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+  # Configure how fast the bucket regenerates.
+  # The `interval` determines the interval at which the `bucket` regains
+  # `amount` credit.
+  config.regenerate = Proc.new do
+    {
+      interval: current_user.bucket.regeneration_interval, # 1.minute
+      amount: current_user.bucket.regeration_amount, # 10
+    }
+  end
+end
+```
 
-## Contributing
+Then call the `cost` method on your actions that you want to protect:
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/rails-action_throttling.
+```ruby
+def show
+  # Every call will cost one credit
+  # Based on the configuration above, this will allow the user to call this
+  # endpoint 100 times every minute.
+  #
+  # This will call the `deduct(1)` method on the configured `config.bucket` (see
+  # above)
+  cost 1
+  # ...
+end
+```
 
-## License
+If you have something like a create method, or some complex method that's costly on the server side, you can set the cost appropriately:
 
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+```ruby
+def complex_method
+  # This will call `deduct(25)` on the `config.bucket` (see above)
+  cost 25
+  # ...
+end
+```
