@@ -2,6 +2,7 @@ ActionThrottling.configure do |config|
   config.bucket_key = Proc.new { 'a' }
   config.regenerate_interval = 10.minutes
   config.regenerate_amount = 100
+  config.redis = Redis.new
 end
 
 class ActionThrottlingTest

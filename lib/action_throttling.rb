@@ -51,7 +51,7 @@ module ActionThrottling
       end
 
       def redis
-        @redis ||= Redis.new
+        @redis ||= ActionThrottling.configuration.redis
       end
   end
 
