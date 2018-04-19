@@ -11,7 +11,7 @@ module ActionThrottling
     def cost(price)
       # If last time the bucket was called is older than the regeneration limit
       # regenerate the bucket.
-      regenerate if expired?
+      refill if cooled_down?
 
       # Deduct the price from the bucket. If it's below zero we raiss a
       # HttpError::ToManyRequests exception/
@@ -20,24 +20,19 @@ module ActionThrottling
       end
 
       # Store when the cost was last called so we can calculate regeneration
-      update_call_time
+      redis.set last_call_key, Time.now.httpdate
     end
 
     private
-
-      def update_call_time
-        redis.set last_call_key, Time.now.httpdate
-      end
-
-      def expired?
-        last_called < regeneration_time
+      def cooled_down?
+        last_called < timeout
       end
 
       def last_call_key
         "#{bucket_key}-last-call"
       end
 
-      def regenerate
+      def refill
         redis.set bucket_key, regenerate_amount
       end
 
@@ -49,7 +44,7 @@ module ActionThrottling
         value = redis.get(last_call_key).presence
 
         # trigger regeneration when first cost is first called
-        value ||= (regeneration_time - 1.second).httpdate
+        value ||= (timeout - 1.second).httpdate
 
         Time.parse value
       end
@@ -58,8 +53,8 @@ module ActionThrottling
         instance_eval &ActionThrottling.configuration.bucket_key
       end
 
-      def regeneration_time
-        instance_eval(&ActionThrottling.configuration.regenerate_interval).ago
+      def timeout
+        instance_eval(&ActionThrottling.configuration.timeout).ago
       end
 
       def redis
@@ -73,9 +68,9 @@ module ActionThrottling
         'Missing bucket_key configuration. See documentation'
     end
 
-    unless ActionThrottling.configuration.regenerate_interval
+    unless ActionThrottling.configuration.timeout
       raise ActionThrottling::MissingConfiguration,
-        'Missing regenerate_interval configuration. See documentation'
+        'Missing timeout configuration. See documentation'
     end
 
     unless ActionThrottling.configuration.regenerate_amount

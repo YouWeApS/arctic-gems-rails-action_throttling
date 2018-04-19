@@ -1,6 +1,8 @@
+require 'timecop'
+
 ActionThrottling.configure do |config|
   config.bucket_key = Proc.new { 'a' }
-  config.regenerate_interval = Proc.new { 10.minutes }
+  config.timeout = Proc.new { 10.minutes }
   config.regenerate_amount = Proc.new { 100 }
   config.redis = Redis.new
 end
@@ -31,6 +33,19 @@ RSpec.describe ActionThrottlingTest do
       Redis.new.del instance.send :last_call_key
       expect { subject }.not_to raise_error HttpError::ToManyRequests
       expect(Redis.new.get(instance.send(:last_call_key))).to be_present
+    end
+
+    it 'refills the bucket after set timeout' do
+      Redis.new.set bucket_key, 0
+      expect { subject }.to raise_error HttpError::ToManyRequests
+
+      Timecop.freeze(9.minutes.from_now) do
+        expect { subject }.to raise_error HttpError::ToManyRequests
+      end
+
+      Timecop.freeze(11.minutes.from_now) do
+        expect { subject }.not_to raise_error HttpError::ToManyRequests
+      end
     end
   end
 end

@@ -13,8 +13,9 @@ ActionThrottling.configure do |config|
   # The bucket_key is evaluated inside your application context
   config.bucket_key = Proc.new { current_user.id }
 
-  # Set the interval in which the bucket is regenerated
-  config.regenerate_interval = Proc.new { current_user.regenerate_interval }
+  # Set the interval in which the user is throttled if running out of credits in
+  # the bucket.
+  config.timeout = Proc.new { current_user.timeout }
 
   # Sets the number of tokens to be put back into the bucket
   config.regenerate_amount = Proc.new { current_user.regenerate_amount }
